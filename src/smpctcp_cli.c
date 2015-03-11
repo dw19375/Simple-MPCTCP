@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "net_util.h"
-#include "mpctcp_cli.h"
+#include "smpctcp_cli.h"
 
 /*
  * handle_packet

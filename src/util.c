@@ -17,6 +17,28 @@
 #include "util.h"
 
 
+
+/*
+ * Returns the current UNIX time in seconds.
+ */
+double
+getTime(void){
+  timeval_t time;
+  gettimeofday(&time, NULL);
+  return(time.tv_sec+ time.tv_usec*1.e-6);
+}
+
+// portable clock_gettime
+int clock_gettime(int dummy, struct timespec* t) {
+  struct timeval now;
+  int rv = gettimeofday(&now, NULL);
+  if (rv) 
+    return rv;
+  t->tv_sec  = now.tv_sec;
+  t->tv_nsec = now.tv_usec * 1000;
+  return 0;
+}
+
 void print_help()
 {
     printf("\n");
@@ -89,27 +111,6 @@ int read_config()
     free(line);
     fclose(f);
     return 0;
-}
-
-/*
- * Returns the current UNIX time in seconds.
- */
-double
-getTime(void){
-  timeval_t time;
-  gettimeofday(&time, NULL);
-  return(time.tv_sec+ time.tv_usec*1.e-6);
-}
-
-// portable clock_gettime
-int clock_gettime(int dummy, struct timespec* t) {
-  struct timeval now;
-  int rv = gettimeofday(&now, NULL);
-  if (rv) 
-    return rv;
-  t->tv_sec  = now.tv_sec;
-  t->tv_nsec = now.tv_usec * 1000;
-  return 0;
 }
 
 
