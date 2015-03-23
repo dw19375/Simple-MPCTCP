@@ -1,9 +1,6 @@
 /*
  * mpctcp_cli.c
  * 
- * While the proxy is bidirectional, this handles the "client" side
- * of things.
- * 
  * Functions to receive and decode packets.
  */
 

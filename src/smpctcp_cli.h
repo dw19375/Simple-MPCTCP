@@ -1,6 +1,7 @@
 #ifndef MPCTCP_CLI_H
 #define MPCTCP_CLI_H 
 
+#include "net_util.h"
 
 /*
  * Function Declarations
