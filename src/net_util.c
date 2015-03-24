@@ -24,7 +24,7 @@ void create_tcp_socket(int* sk, char* ip_addr, int port)
 {
     struct addrinfo hints, *servinfo, *p;
     ssize_t rv;
-    char port_str[5];
+    char port_str[6];
     
     sprintf(port_str, "%d",port);
     
@@ -64,7 +64,7 @@ void create_udp_socket(int* sk, char* ip_addr, int port)
 {
     struct addrinfo hints, *servinfo, *p;
     ssize_t rv;
-    char port_str[5];
+    char port_str[6];
     
     sprintf(port_str, "%d",port);
     
