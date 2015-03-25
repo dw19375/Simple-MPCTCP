@@ -12,22 +12,24 @@
 #include <string.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#include "net_util.h"
 
 #define IFDOWN 0
 #define IFUP 1
 
-struct addr_ll {
+typedef struct addr_ll {
   int active;
   char if_name[10];
   struct sockaddr_in addr;
   struct addr_ll * next;
   int sk;
-};
+}addr_ll;
 
 /*
  * Function declarations
  */
-struct addr_ll* discover_interfaces();
+void sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr_in path );
+addr_ll* discover_interfaces();
 void free_interface_list( struct addr_ll *addr_list );
 
 #endif

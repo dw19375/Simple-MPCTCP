@@ -65,6 +65,7 @@ void create_udp_socket(int* sk, char* ip_addr, int port)
     struct addrinfo hints, *servinfo, *p;
     ssize_t rv;
     char port_str[6];
+    const int on=1;
     
     sprintf(port_str, "%d",port);
     
@@ -82,6 +83,9 @@ void create_udp_socket(int* sk, char* ip_addr, int port)
             perror("Failure to create UDP socket");
             continue;
         }
+        
+        setsockopt(*sk, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+        setsockopt(*sk, IPPROTO_IP, IP_PKTINFO, &on, sizeof(on));
         
         if ((bind(*sk, p->ai_addr, p->ai_addrlen)) == -1) {
             close(*sk);
