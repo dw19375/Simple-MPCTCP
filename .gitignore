@@ -37,6 +37,8 @@
 
 .buildmode
 smpctcp
+listener
+multi_if
 
 # Backup files
 *~
