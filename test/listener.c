@@ -13,7 +13,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define MYPORT "4950"	// the port users will be connecting to
+#define MYPORT "8888"	// the port users will be connecting to
 
 #define MAXBUFLEN 100
 
@@ -29,6 +29,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(void)
 {
+  int i, j;
 	int sockfd;
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
@@ -72,22 +73,30 @@ int main(void)
 
 	freeaddrinfo(servinfo);
 
-	printf("listener: waiting to recvfrom...\n");
+  for( i=0; i<4; i++ )
+  {
+    printf("listener: waiting to recvfrom...\n");
 
-	addr_len = sizeof their_addr;
-	if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
-		(struct sockaddr *)&their_addr, &addr_len)) == -1) {
-		perror("recvfrom");
-		exit(1);
-	}
+    addr_len = sizeof their_addr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
+      (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+      perror("recvfrom");
+      exit(1);
+    }
 
-	printf("listener: got packet from %s\n",
-		inet_ntop(their_addr.ss_family,
-			get_in_addr((struct sockaddr *)&their_addr),
-			s, sizeof s));
-	printf("listener: packet is %d bytes long\n", numbytes);
-	buf[numbytes] = '\0';
-	printf("listener: packet contains \"%s\"\n", buf);
+    printf("listener: got packet from %s\n",
+      inet_ntop(their_addr.ss_family,
+        get_in_addr((struct sockaddr *)&their_addr),
+        s, sizeof s));
+    printf("listener: packet is %d bytes long\n", numbytes);
+    buf[numbytes] = '\0';
+    for( j=0; j<numbytes; j++ )
+    {
+      printf("%X ", buf[j]);
+      if( j % 8 == 0 )
+        putchar('\n');
+    }
+  }
 
 	close(sockfd);
 
