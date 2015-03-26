@@ -76,7 +76,7 @@ struct addr_ll* discover_interfaces()
   struct addr_ll *curr = NULL;
   struct addr_ll *next = NULL;
 
-  addr_list.active = IFDOWN;
+  addr_list.active = IFUP;
   addr_list.next = NULL;
   
   if ((status = getifaddrs(&ifaddr)) != 0)
