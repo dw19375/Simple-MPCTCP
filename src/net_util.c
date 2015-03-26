@@ -87,10 +87,10 @@ void create_udp_socket(int* sk, char* ip_addr, int port)
         setsockopt(*sk, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
         setsockopt(*sk, IPPROTO_IP, IP_PKTINFO, &on, sizeof(on));
         
-        if ((bind(*sk, p->ai_addr, p->ai_addrlen)) == -1) {
-            close(*sk);
-            perror("Failure to bind UDP socket");
-        }
+//         if ((bind(*sk, p->ai_addr, p->ai_addrlen)) == -1) {
+//             close(*sk);
+//             perror("Failure to bind UDP socket");
+//         }
         break;
     }
     
