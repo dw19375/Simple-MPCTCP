@@ -35,7 +35,7 @@ int main(void)
 	int rv;
 	int numbytes;
 	struct sockaddr_storage their_addr;
-	char buf[MAXBUFLEN];
+	unsigned char buf[MAXBUFLEN];
 	socklen_t addr_len;
 	char s[INET6_ADDRSTRLEN];
 
@@ -92,10 +92,11 @@ int main(void)
     buf[numbytes] = '\0';
     for( j=0; j<numbytes; j++ )
     {
-      printf("%X ", buf[j]);
-      if( j % 8 == 0 )
+      printf("%02X ", buf[j]);
+      if( j % 8 == 7 )
         putchar('\n');
     }
+    putchar('\n');
   }
 
 	close(sockfd);
