@@ -28,7 +28,7 @@ typedef struct addr_ll {
 /*
  * Function declarations
  */
-void sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr_in path );
+int sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr_in path );
 addr_ll* discover_interfaces();
 void free_interface_list( struct addr_ll *addr_list );
 

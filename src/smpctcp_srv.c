@@ -17,8 +17,11 @@
  *    remote - Address/Port to send to.  Currently, only IPv4 is used
  *    path - Address of interface to send from
  */
-void sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr_in path )
+int sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr_in path )
 {
+  int retval;
+  char ipstr[INET6_ADDRSTRLEN];
+  
   struct iovec iov[10];
   struct msghdr msg = {0};
   struct cmsghdr *cmsg;
@@ -51,11 +54,13 @@ void sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr
   pktinfo->ipi_spec_dst = path.sin_addr;
   pktinfo->ipi_addr = remote.sin_addr;
   
-  if ((sendmsg(sk, &msg, 0)) == -1)
+  if ((retval = sendmsg(sk, &msg, 0)) == -1)
   {
-    perror("send");
-    exit(1);
+    fprintf( stderr, "Failed to send packet via %s\n",
+             inet_ntop( AF_INET, &(path.sin_addr), ipstr, INET6_ADDRSTRLEN ));
   }
+  
+  return retval;
 }
 
 /*

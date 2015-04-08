@@ -12,13 +12,14 @@
 #include "smpctcp_cli.h"
 #include "util.h"
 
-#define REMOTE_IP "18.189.80.44"
+#define REMOTE_IP "18.62.30.46"
 #define REMOTE_PORT 8888
 
 int main( int argc, char *argv[] )
 {
   int retval = 0;
   int sock;
+  int bytes;
 
   char str[16] = "Hello World!";
   
@@ -67,9 +68,9 @@ int main( int argc, char *argv[] )
       // Send packet over every interface in addr_list
       for( curr = addr_list; curr != NULL; curr = curr->next )
       {
-        printf("Sending from %s\n", 
-               inet_ntop( AF_INET, &((curr->addr).sin_addr), ipstr, 32 ));
-        sendpkt( pkt, sock, remote, curr->addr );
+        bytes = sendpkt( pkt, sock, remote, curr->addr );
+        printf("Sending %d bytes from %s\n", bytes, 
+               inet_ntop( AF_INET, &((curr->addr).sin_addr), ipstr, INET6_ADDRSTRLEN ));
       }
     }
     
