@@ -20,6 +20,9 @@ int main( int argc, char *argv[] )
   int retval = 0;
   int sock;
   int bytes;
+  
+  char remote_ip[INET6_ADDRSTRLEN];
+  int remote_port = REMOTE_PORT;
 
   char str[16] = "Hello World!";
   
@@ -31,9 +34,27 @@ int main( int argc, char *argv[] )
   
   struct sockaddr_in remote;
   
+  /*
+   * Parse arguments.
+   */
+  if( argc == 3 )
+  {
+    strncpy( remote_ip, argv[1], INET6_ADDRSTRLEN );
+    remote_port = atoi( argv[2] );
+  }
+  else if( argc == 2 )
+  {
+    strncpy( remote_ip, argv[1], INET6_ADDRSTRLEN );
+  }
+  else
+  {
+    printf( "Usage: %s Host Port\n", argv[0] );
+    exit(0);
+  }
+  
   // Set up remote sockaddr_in struct.
-  inet_pton(AF_INET, REMOTE_IP, &(remote.sin_addr));
-  remote.sin_port = htons(REMOTE_PORT);
+  inet_pton(AF_INET, remote_ip, &(remote.sin_addr));
+  remote.sin_port = htons(remote_port);
   remote.sin_family = AF_INET;
   
   // Get list of interfaces
@@ -52,7 +73,7 @@ int main( int argc, char *argv[] )
     }
   
     // Create a UDP socket
-    create_udp_socket( &sock, REMOTE_IP, REMOTE_PORT );
+    create_udp_socket( &sock, remote_ip, remote_port );
     
     // Get an empty packet.
     pkt = create_pkt( 16 );
