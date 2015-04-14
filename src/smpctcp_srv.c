@@ -6,6 +6,59 @@
  */
 
 #include "smpctcp_srv.h"
+#include "pslist.h"
+#include "util.h"
+#include <unistd.h>
+
+
+/*
+ * Read from a file and place packet in the given queue.  This is not 
+ * thread safe yet!  Note that fd must refer to an open file.
+ * 
+ * Inputs:
+ *    fd - File to read from
+ *    q - Pointer to head of list at the beginning of the queue
+ *    n - Maximum number of bytes to read from file
+ *    
+ * Return Value:
+ *    Number of bytes read from fd.  Returns -1 on error.
+ */
+int queue_next_packet( int fd, pslist_elem** q, int n )
+{
+  int retval = -1;
+  pslist_elem* elem;
+  static int seqno = 0;
+  
+  if( NULL != q )
+  {
+    // Create a new packet - we'll allocate n bytes in the buffer,
+    // even if we don't need them.  We'll change it later.
+    elem = create_pslist_elem( n );
+    
+    if( NULL != elem )
+    {
+      // Read up to n bytes from fd, put in packet buffer
+      retval = read( fd, (elem->pkt).buf, n );
+      
+      if( retval > 0 )
+      {
+        // We have read some bytes, go ahead and make the packet
+        elem->pkt.tstamp = getTime();
+        elem->pkt.flag = NORMAL;
+        elem->pkt.seqno = seqno++;    // Increments after
+        elem->pkt.payload_len = retval;
+        elem->pkt.num_packets = 0;
+        elem->pkt.coeff_seed = 0;
+        
+#warning Make this thread safe!
+        // Add the element to the queue.
+        ins_pslist_elem( q, elem );
+      }
+    }
+  }
+  
+  return retval;
+}
 
 /*
  * Sends a Data_Pckt on a given path to the address and port provided in
