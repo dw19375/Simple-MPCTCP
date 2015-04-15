@@ -39,15 +39,6 @@ typedef int socket_t;
 #define   ACK 6
 
 
-struct addr_list
-{
-	int active;
-	char if_name[10];
-	struct sockaddr_in addr;
-	struct addr_list * next;
-	int sk;
-};
-
 typedef struct
 {
   double tstamp;        // Time stamp
