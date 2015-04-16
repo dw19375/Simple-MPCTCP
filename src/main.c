@@ -19,7 +19,7 @@
 int main( int argc, char *argv[] )
 {
   int retval = 0;
-  int sock;
+  //  int sock;
   int bytes;
   
   char remote_ip[INET6_ADDRSTRLEN];
@@ -72,10 +72,7 @@ int main( int argc, char *argv[] )
         printf("%s: %s\n",curr->if_name,ipstr);
       }
     }
-  
-    // Create a UDP socket
-    create_udp_socket( &sock, remote_ip, remote_port );
-    
+      
     // Get an empty packet.
     pkt = create_pkt( 16 );
     
@@ -90,13 +87,18 @@ int main( int argc, char *argv[] )
       // Send packet over every interface in addr_list
       for( curr = addr_list; curr != NULL; curr = curr->next )
       {
-        bytes = sendpkt( pkt, sock, remote, curr->addr );
+	// Create a UDP socket
+	create_udp_socket( &(curr->sk), remote_ip, remote_port );
+
+        bytes = sendpkt( pkt, curr->sk, remote, curr->addr );
         printf("Sending %d bytes from %s\n", bytes, 
                inet_ntop( AF_INET, &((curr->addr).sin_addr), ipstr, INET6_ADDRSTRLEN ));
+
+	close( curr->sk );
       }
     }
     
-    close( sock );
+    //    close( sock );
     delete_pkt( pkt );
   }
   
