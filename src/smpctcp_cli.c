@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <pthread.h>
 #include "net_util.h"
 #include "smpctcp_cli.h"
 

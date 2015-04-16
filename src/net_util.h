@@ -39,6 +39,9 @@ typedef int socket_t;
 #define   ACK 6
 
 
+/*
+ * Data struct for packets.
+ */
 typedef struct
 {
   double tstamp;        // Time stamp
@@ -59,7 +62,6 @@ typedef struct
                         // Don't statically allocate here so we can 
                         // dynamically set MSS
 } Data_Pckt;
-
 
 
 /* Function declarations */

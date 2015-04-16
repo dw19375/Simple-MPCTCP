@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "smpctcp_srv.h"
 #include "smpctcp_cli.h"
 #include "util.h"
@@ -28,8 +29,8 @@ int main( int argc, char *argv[] )
   
   Data_Pckt* pkt;
   
-  struct addr_ll *addr_list = NULL;
-  struct addr_ll *curr = NULL;
+  struct path_ll *addr_list = NULL;
+  struct path_ll *curr = NULL;
   char ipstr[INET6_ADDRSTRLEN];
   
   struct sockaddr_in remote;

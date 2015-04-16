@@ -9,7 +9,25 @@
 #include "pslist.h"
 #include "util.h"
 #include <unistd.h>
+#include <pthread.h>
 
+
+/*
+ * Sender Thread
+ * This thread sends packets in its queue and sleeps if the
+ * queue is empty.
+ * 
+ * Input is a pointer to a path_ll struct.  Does not return
+ * anything.
+ */
+void *sender_thread( void* arg )
+{
+  path_ll* data = (path_ll*)arg;
+  
+  
+  
+  pthread_exit( NULL );
+}
 
 /*
  * Read from a file and place packet in the given queue.  This is not 
@@ -124,15 +142,15 @@ int sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr_
  *    Pointer to address list created
  * 
  */
-struct addr_ll* discover_interfaces()
+struct path_ll* discover_interfaces()
 {
-  struct addr_ll addr_list; // List uses sentinel node.
+  struct path_ll addr_list; // List uses sentinel node.
   
   struct ifaddrs *ifaddr, *p;
   int status;
   char ipstr[INET6_ADDRSTRLEN];
-  struct addr_ll *curr = NULL;
-  struct addr_ll *next = NULL;
+  struct path_ll *curr = NULL;
+  struct path_ll *next = NULL;
 
   addr_list.active = IFUP;
   addr_list.next = NULL;
@@ -178,7 +196,7 @@ struct addr_ll* discover_interfaces()
             
             if (curr->active == IFUP)
             {
-              next = (struct addr_ll *)malloc(sizeof(struct addr_ll));
+              next = (struct path_ll *)malloc(sizeof(struct path_ll));
               curr->next = next;
             }
             else
@@ -208,7 +226,7 @@ struct addr_ll* discover_interfaces()
  * Parameter:
  *    addr_list - pointer to head of list.
  */
-void free_interface_list( struct addr_ll *addr_list )
+void free_interface_list( struct path_ll *addr_list )
 {
   if( NULL != addr_list )
   {
