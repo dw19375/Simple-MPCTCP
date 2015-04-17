@@ -60,7 +60,7 @@ void create_tcp_socket(int* sk, char* ip_addr, int port)
     return;
 }
 
-void create_udp_socket(int* sk, char* ip_addr, int port)
+void create_udp_socket(int* sk, char* ip_addr, int port, int should_bind)
 {
     struct addrinfo hints, *servinfo, *p;
     ssize_t rv;
@@ -78,7 +78,8 @@ void create_udp_socket(int* sk, char* ip_addr, int port)
         exit(EXIT_FAILURE);
     }
     
-    for (p = servinfo; p != NULL; p = p->ai_next) {
+    for (p = servinfo; p != NULL; p = p->ai_next)
+    {
         if ((*sk = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("Failure to create UDP socket");
             continue;
@@ -87,10 +88,13 @@ void create_udp_socket(int* sk, char* ip_addr, int port)
         setsockopt(*sk, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
         setsockopt(*sk, IPPROTO_IP, IP_PKTINFO, &on, sizeof(on));
         
-//         if ((bind(*sk, p->ai_addr, p->ai_addrlen)) == -1) {
-//             close(*sk);
-//             perror("Failure to bind UDP socket");
-//         }
+        if( should_bind )
+        {
+          if ((bind(*sk, p->ai_addr, p->ai_addrlen)) == -1) {
+              close(*sk);
+              perror("Failure to bind UDP socket");
+          }
+        }
         break;
     }
     

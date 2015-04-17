@@ -66,7 +66,7 @@ typedef struct
 
 /* Function declarations */
 void create_tcp_socket(int*, char*, int);
-void create_udp_socket(int*, char*, int);
+void create_udp_socket(int*, char*, int, int);
 void htonpData(Data_Pckt *msg);
 void ntohpData(Data_Pckt *msg);
 Data_Pckt* create_pkt( uint32_t buflen );
