@@ -38,7 +38,7 @@ proxy_config config = {
     
     // Proxy Information
     .remote_addr="",
-    .remote_port=1080,
+    .remote_port=8888,
     
     // MPCTCP Settings
     .slr_scaling=1.0,
