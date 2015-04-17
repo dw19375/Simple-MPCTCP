@@ -5,6 +5,7 @@
  * handle ACKs.
  */
 
+#include "default_config.h"
 #include "smpctcp_srv.h"
 #include "pslist.h"
 #include "util.h"
@@ -17,34 +18,135 @@
  * This thread sends packets in its queue and sleeps if the
  * queue is empty.
  * 
- * Input is a pointer to a path_ll struct.  Does not return
- * anything.
+ * Input is a pointer to a path_ll struct.  When the thread 
+ * is started, all the variables in arg should be initialized.
+ * 
+ * 
+ * Does not return anything.
  */
 void *sender_thread( void* arg )
 {
   path_ll* data = (path_ll*)arg;
+  int bytes;
   
-  
+  if( NULL != data )
+  {
+    while( 1 )
+    {
+      /*
+      * Lock queue mutex and wait for signal.  Note that the
+      * pthread_cond_wait routine will automatically and atomically 
+      * unlock mutex while it waits.
+      * This is in a while loop in case data->pkt becomes NULL after
+      * we have been signaled, which should theoretically never happen.
+      * We are, however, dealing with the black magic of multithreaded 
+      * programming, so it doesn't hurt to be cautious.
+      */
+      pthread_mutex_lock( &(data->qlock) );
+      while( data->pkt == NULL )
+      {
+        // While we don't have a packet to send, just wait here
+        pthread_cond_wait( &(data->qcond), &(data->qlock) );
+      }
+      
+      // Set the busy flag and increment the in_flight and sent counters
+      pthread_mutex_lock( &(data->data_lock) );
+      data->busy = 1;
+      (data->sent)++;
+      (data->in_flight)++;
+      pthread_mutex_unlock( &(data->data_lock) );
+      
+      
+      // Send the packet
+      bytes = sendpkt( data->pkt, data->sk, data->remote, data->addr );
+      
+      // Set data->pkt to NULL to indicate we can receive another packet
+      data->pkt = NULL;
+      
+      // We're not sending a packet anymore
+      pthread_mutex_unlock( &(data->qlock) );
+      
+      // Clear busy flag
+      pthread_mutex_lock( &(data->data_lock) );
+      data->busy = 0;
+      pthread_mutex_unlock( &(data->data_lock) );
+    }
+  }
   
   pthread_exit( NULL );
 }
 
 /*
+ * Initialize the packet and thread management data of a 
+ * path_ll element.  The Interface data should already be set.
+ * 
+ * Initializes mutexes and condition variables, creates the 
+ * sockets, and initializes all the path statistics.
+ * 
+ * Binds listen_sk to next available port.
+ * 
+ * NOTE: Call destroy_path to destroy mutexes and condition 
+ * variables.
+ * 
+ * Inputs:
+ *    p - Pointer to path_ll struct.
+ *    remote_ip - remote IP address string
+ * 
+ * Return value:
+ *  Pointer to initialized path_ll struct.
+ */
+path_ll* init_path( path_ll* p, char* remote_ip )
+{
+  static int listen_port = 0;
+  
+  if( listen_port == 0 )
+  {
+    listen_port = config.port_start;
+  }
+  
+  if( NULL != p )
+  {
+    // Initialize mutexes and condition variables
+    pthread_mutex_init( &(p->qlock), NULL );
+    pthread_mutex_init( &(p->data_lock), NULL );
+    pthread_cond_init( &(p->qcond), NULL );
+    
+    // Initialize data
+    p->pkt = NULL;
+    p->busy = 0;
+    p->in_flight = 0;
+    p->sent = 0;
+    p->lost = 0;
+    p->rtt = 0.0;
+    p->loss_prob = 0.0;
+    
+    // Initialize sockets, bind listener
+    create_udp_socket( &(p->sk), remote_ip, config.remote_port, 0 );
+    create_udp_socket( &(p->listen_sk), remote_ip, config.remote_port, 1 );
+  }
+  
+  return p;
+}
+
+/*
  * Read from a file and place packet in the given queue.  This is not 
- * thread safe yet!  Note that fd must refer to an open file.
+ * thread safe, but is intended to be called from the main thread
+ * only.
+ * 
+ * NOTE that fd must refer to an open file.
  * 
  * Inputs:
  *    fd - File to read from
- *    q - Pointer to head of list at the beginning of the queue
+ *    q - Pointer to pointer to the beginning of the queue
  *    n - Maximum number of bytes to read from file
  *    
  * Return Value:
- *    Number of bytes read from fd.  Returns -1 on error.
+ *    Pointer to newly created element.  NULL if error.
  */
-int queue_next_packet( int fd, pslist_elem** q, int n )
+pslist_elem* queue_next_packet( int fd, pslist_elem** q, int n )
 {
-  int retval = -1;
-  pslist_elem* elem;
+  int retval;
+  pslist_elem* elem = NULL;
   static int seqno = 0;
   
   if( NULL != q )
@@ -68,14 +170,13 @@ int queue_next_packet( int fd, pslist_elem** q, int n )
         elem->pkt.num_packets = 0;
         elem->pkt.coeff_seed = 0;
         
-#warning Make this thread safe!
         // Add the element to the queue.
         ins_pslist_elem( q, elem );
       }
     }
   }
   
-  return retval;
+  return elem;
 }
 
 /*
