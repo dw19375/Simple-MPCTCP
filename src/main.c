@@ -87,8 +87,8 @@ int main( int argc, char *argv[] )
       // Send packet over every interface in addr_list
       for( curr = addr_list; curr != NULL; curr = curr->next )
       {
-	// Create a UDP socket
-	create_udp_socket( &(curr->sk), remote_ip, remote_port );
+        // Create a UDP socket
+        create_udp_socket( &(curr->sk), remote_ip, remote_port, 0 );
 
         bytes = sendpkt( pkt, curr->sk, remote, curr->addr );
         printf("Sending %d bytes from %s\n", bytes, 
