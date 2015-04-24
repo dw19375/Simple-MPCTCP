@@ -1,0 +1,2 @@
+Each path only takes one packet at a time, not a queue, since we don't know when a path will become free.  Instead, it's probably better to check that a path is free before trying to write a packet to the path.
+

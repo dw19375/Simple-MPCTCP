@@ -95,7 +95,7 @@ void *sender_thread( void* arg )
  * Return value:
  *  Pointer to initialized path_ll struct.
  */
-path_ll* init_path( path_ll* p, char* remote_ip )
+path_ll* init_path( path_ll* p, char* remote_ip, int remote_port )
 {
   static int listen_port = 0;
   
@@ -121,11 +121,30 @@ path_ll* init_path( path_ll* p, char* remote_ip )
     p->loss_prob = 0.0;
     
     // Initialize sockets, bind listener
-    create_udp_socket( &(p->sk), remote_ip, config.remote_port, 0 );
-    create_udp_socket( &(p->listen_sk), remote_ip, config.remote_port, 1 );
+    create_udp_socket( &(p->sk), remote_ip, remote_port, 0 );
+    create_udp_socket( &(p->listen_sk), remote_ip, remote_port, 1 );
   }
   
   return p;
+}
+
+/*
+ * Destroys mutexes and closes sockets associated with a path.
+ * 
+ * Input:
+ *    p - path_ll to destroy
+ */
+void destroy_path( path_ll* p )
+{
+  if( NULL != p )
+  {
+    pthread_mutex_destroy( &(p->qlock) );
+    pthread_mutex_destroy( &(p->data_lock) );
+    pthread_cond_destroy( &(p->qcond) );
+    
+    close( p->sk );
+    close( p->listen_sk );
+  }
 }
 
 /*
@@ -134,6 +153,7 @@ path_ll* init_path( path_ll* p, char* remote_ip )
  * only.
  * 
  * NOTE that fd must refer to an open file.
+ * NOTE Please call rm_pslist_elem to free the malloc'ed memory.
  * 
  * Inputs:
  *    fd - File to read from
@@ -145,9 +165,7 @@ path_ll* init_path( path_ll* p, char* remote_ip )
  */
 pslist_elem* queue_next_packet( int fd, pslist_elem** q, int n )
 {
-  int retval;
   pslist_elem* elem = NULL;
-  static int seqno = 0;
   
   if( NULL != q )
   {
@@ -157,19 +175,10 @@ pslist_elem* queue_next_packet( int fd, pslist_elem** q, int n )
     
     if( NULL != elem )
     {
-      // Read up to n bytes from fd, put in packet buffer
-      retval = read( fd, (elem->pkt).buf, n );
+      init_normal_data_pckt( &(elem->pkt), fd, n );
       
-      if( retval > 0 )
+      if( 0 != (elem->pkt).payload_len )
       {
-        // We have read some bytes, go ahead and make the packet
-        elem->pkt.tstamp = getTime();
-        elem->pkt.flag = NORMAL;
-        elem->pkt.seqno = seqno++;    // Increments after
-        elem->pkt.payload_len = retval;
-        elem->pkt.num_packets = 0;
-        elem->pkt.coeff_seed = 0;
-        
         // Add the element to the queue.
         ins_pslist_elem( q, elem );
       }
@@ -177,6 +186,72 @@ pslist_elem* queue_next_packet( int fd, pslist_elem** q, int n )
   }
   
   return elem;
+}
+
+/*
+ * Allocates memory for and initializes a new normal Data_Pckt.  Reads from
+ * the file referred to by fd and copies at most n bytes into the packet's
+ * data buffer
+ * 
+ * Inputs:
+ *    fd - File to read from
+ *    n  - Maximum number of bytes to read.
+ * 
+ * Returns pointer to packet that was created.
+ */
+Data_Pckt* make_next_pkt( int fd, int n )
+{
+  Data_Pckt* pkt;
+  
+  // Allocate memory for the packet
+  pkt = create_pkt( n );
+  
+  // Initialize the packet and return it.
+  return init_normal_data_pckt( pkt, fd, n );
+}
+
+/*
+ * Initializes a NORMAL Data_Pckt.  Reads at most n bytes from 
+ * file given by fd.
+ * 
+ * NOTE: This function keeps track of sequence numbers, so only
+ * use this to set the seqno of a packet.
+ * 
+ * This does not allocate a buffer for the data, THAT MUST HAVE BEEN
+ * DONE PREVIOUSLY!
+ * 
+ * Inputs:
+ *    pkt - Pointer to Data_Pckt
+ *    fd  - File to read from
+ *    n   - Maximum number of bytes to read from file
+ * 
+ * Returns Data_Pckt passed in.
+ * 
+ */
+Data_Pckt* init_normal_data_pckt( Data_Pckt *pkt, int fd, int n )
+{
+  static int seqno = 0;
+  int retval;
+  
+  if( NULL != pkt )
+  {
+    // Read up to n bytes from fd, put in packet buffer
+    retval = read( fd, pkt->buf, n );
+    
+    if( retval > 0 )
+    {
+      // We have read some bytes, go ahead and make the packet
+      pkt->tstamp = getTime();
+      pkt->flag = NORMAL;
+      pkt->seqno = seqno++;    // Increments after
+      pkt->payload_len = retval;
+      pkt->num_packets = 0;
+      pkt->coeff_seed = 0;
+    }
+    
+  }
+  
+  return pkt;
 }
 
 /*
@@ -331,13 +406,13 @@ void free_interface_list( struct path_ll *addr_list )
 {
   if( NULL != addr_list )
   {
-    if( NULL == addr_list->next )
-    {
-      free( addr_list );
-    }
-    else
+    if( NULL != addr_list->next )
     {
       free_interface_list( addr_list->next );
     }
+    
+    // Destroy mutexes and then free memory associated with addr_list
+    destroy_path( addr_list );
+    free( addr_list );
   }
 }

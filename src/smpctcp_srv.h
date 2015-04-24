@@ -55,9 +55,18 @@ typedef struct path_ll
 /*
  * Function declarations
  */
+void *sender_thread( void* arg );
+
+path_ll* init_path( path_ll* p, char* remote_ip, int remote_port );
+void destroy_path( path_ll* p );
+
 int sendpkt( Data_Pckt* pkt, int sk, struct sockaddr_in remote, struct sockaddr_in path );
+
 path_ll* discover_interfaces();
 void free_interface_list( struct path_ll *addr_list );
+
 pslist_elem* queue_next_packet( int fd, pslist_elem** q, int n );
+Data_Pckt* make_next_pkt( int fd, int n );
+Data_Pckt* init_normal_data_pckt( Data_Pckt *pkt, int fd, int n );
 
 #endif

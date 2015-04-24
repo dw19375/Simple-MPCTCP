@@ -1,7 +1,7 @@
 # Makefile for smpctcp
 
 CC = clang
-CFLAGS  = -g -Wall
+CFLAGS  = -g -Wall -pthread
 
 
 all: smpctcp
